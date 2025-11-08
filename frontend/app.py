@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import joblib
 
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 
@@ -149,6 +150,48 @@ elif menu == "Візуалізація даних":
             plt.title(f"Розподіл {selected_col} за рівнями залученості")
             st.pyplot(fig)
             plt.close()
+            
+        # Додаємо візуалізацію важливості ознак
+        st.markdown("### 🎯 Важливість ознак у класифікації")
+        try:
+            model = joblib.load("../ml/model.pkl")
+            if hasattr(model, 'feature_importances_'):
+                # Отримуємо список ознак
+                feature_names = ['Age', 'PlayTimeHours', 'InGamePurchases', 'SessionsPerWeek', 
+                               'AvgSessionDurationMinutes', 'PlayerLevel', 'AchievementsUnlocked',
+                               'Gender', 'Location', 'GameGenre', 'GameDifficulty']
+                
+                # Створюємо DataFrame з важливістю ознак
+                importance_df = pd.DataFrame({
+                    'Feature': feature_names,
+                    'Importance': model.feature_importances_
+                }).sort_values('Importance', ascending=False)
+                
+                # Візуалізація
+                fig, ax = plt.subplots(figsize=(12, 6))
+                sns.barplot(data=importance_df, x='Importance', y='Feature', ax=ax)
+                plt.title('Важливість ознак у визначенні рівня залученості')
+                ax.set_xlabel('Важливість')
+                ax.set_ylabel('Ознака')
+                st.pyplot(fig)
+                plt.close()
+                
+                # Таблиця з важливістю ознак
+                st.markdown("#### 📊 Деталізація важливості ознак")
+                importance_df['Importance'] = importance_df['Importance'].apply(lambda x: f"{x:.4f}")
+                st.table(importance_df)
+                
+                # Додаткова інформація
+                st.info("""
+                💡 **Як читати важливість ознак:**
+                - Більше значення означає більший вплив ознаки на визначення рівня залученості
+                - Значення показують відносний внесок кожної ознаки у прийняття рішення моделлю
+                - Сума всіх значень важливості дорівнює 1
+                """)
+            else:
+                st.warning("Модель не підтримує визначення важливості ознак")
+        except Exception as e:
+            st.error(f"Не вдалося завантажити модель або отримати важливість ознак: {str(e)}")
 
 elif menu == "Кластеризація":
     st.title("🎯 Кластеризація гравців")
