@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import joblib
 import numpy as np
 import json
+import os
 from typing import Optional
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from sklearn.cluster import KMeans
@@ -17,9 +18,14 @@ app = FastAPI(
     description="API для класифікації рівня залученості гравців на основі їхньої поведінки в грі."
 )
 
+import os
+
+# Визначаємо шлях до ml моделей (працює як локально, так і в Docker)
+ML_PATH = "/app/ml" if os.path.exists("/app/ml") else "../ml"
+
 try:
-    model = joblib.load("../ml/model.pkl")
-    scaler = joblib.load("../ml/scaler.pkl")
+    model = joblib.load(f"{ML_PATH}/model.pkl")
+    scaler = joblib.load(f"{ML_PATH}/scaler.pkl")
 except Exception as e:
     raise RuntimeError(f"Не вдалося завантажити модель або scaler: {e}")
 

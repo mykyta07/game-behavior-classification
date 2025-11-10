@@ -13,12 +13,12 @@ if 'form_data' not in st.session_state:
 
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 
-st.set_page_config(page_title="Gaming Behavior Classifier �", page_icon="�", layout="centered")
+st.set_page_config(page_title="Gaming Behavior Classifier", layout="centered")
 
 menu = st.sidebar.radio("📂 Меню", ["Прогноз", "Візуалізація даних", "Кластеризація", "Порівняння методів"])
 
 if menu == "Прогноз":
-    st.title("� Gaming Behavior Classifier")
+    st.title("Gaming Behavior Classifier")
     st.markdown("Введіть дані про поведінку гравця для визначення рівня залученості.")
 
     with st.form(key="gamer_behavior_form", clear_on_submit=False):
@@ -165,7 +165,9 @@ elif menu == "Візуалізація даних":
         # Додаємо візуалізацію важливості ознак
         st.markdown("### 🎯 Важливість ознак у класифікації")
         try:
-            model = joblib.load("../ml/model.pkl")
+            # Визначаємо шлях до моделі (працює як локально, так і в Docker)
+            ML_PATH = "/app/ml" if os.path.exists("/app/ml") else "../ml"
+            model = joblib.load(f"{ML_PATH}/model.pkl")
             if hasattr(model, 'feature_importances_'):
                 # Отримуємо список ознак
                 feature_names = ['Age', 'PlayTimeHours', 'InGamePurchases', 'SessionsPerWeek', 
@@ -385,13 +387,11 @@ elif menu == "Кластеризація":
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
         
-        # Показуємо інформацію про пропущені значення
         missing_info = df.isnull().sum()
         if missing_info.any():
             st.warning("⚠️ Виявлено пропущені значення в даних:")
             st.write(missing_info[missing_info > 0])
-            
-            # Опції обробки пропущених значень
+
             handling_method = st.radio(
                 "Оберіть метод обробки пропущених значень:",
                 ["Видалити рядки з пропущеними значеннями", 

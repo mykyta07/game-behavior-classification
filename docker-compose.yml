@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gaming-behavior-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ml:/app/ml:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - gaming-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gaming-behavior-frontend
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./ml:/app/ml:ro
+    environment:
+      - API_URL=http://backend:8000
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - backend
+    networks:
+      - gaming-network
+    restart: unless-stopped
+
+networks:
+  gaming-network:
+    driver: bridge
